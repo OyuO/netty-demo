@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>websocket</title>
+</head>
+<body>
+<div>
+    <div>
+        <input id="send-msg-box" type="text">
+        <input id="who" type="text" placeholder="who">
+        <button id="send-button" onclick="sendMsg()">发送</button>
+    </div>
+</div>
+</body>
+<script>
+    function getSearchString(key, Url) {
+        var str = Url;
+        str = str.substring(1, str.length); // 获取URL中?之后的字符（去掉第一位的问号）
+        // 以&分隔字符串，获得类似name=xiaoli这样的元素数组
+        var arr = str.split("&");
+        var obj = new Object();
+
+        // 将每一个数组元素以=分隔并赋给obj对象
+        for (var i = 0; i < arr.length; i++) {
+            var tmp_arr = arr[i].split("=");
+            obj[decodeURIComponent(tmp_arr[0])] = decodeURIComponent(tmp_arr[1]);
+        }
+        return obj[key];
+    }
+
+    //创建一个websocket对象
+    let ws = new WebSocket("ws://localhost:8888")
+    let search = window.location.search
+    let nickname = getSearchString("user", search)
+
+    //连接成功时触发
+    ws.onopen = function (event) {
+        console.log("连接成功");
+        ws.send("{\"nickname\":\"" + nickname + "\",\"code\":\"1001\"}");
+        joinGroup();
+    }
+
+    //连接失败时触发
+    ws.onerror = function (event) {
+        console.log("连接失败");
+    }
+
+    //接收消息时触发
+    ws.onmessage = function (event) {
+        console.log(event)
+    }
+
+    //连接关闭时触发
+    ws.onclose = function (event) {
+        console.log("连接关闭")
+    }
+
+    function sendMsg() {
+        let msg = document.getElementById("send-msg-box").value;
+        let target = document.getElementById("who").value;
+        document.getElementById("send-msg-box").value = "";
+        document.getElementById("who").value = "";
+        if(target==""){
+            ws.send('{"nickname":"' + nickname + '","code":"1002","type":"2","content":"' + msg + '"}')
+        }else{
+            ws.send('{"nickname":"' + nickname + '","code":"1002","type":"1","target":"' + target + '","content":"' + msg + '"}')
+        }
+    }
+
+    function joinGroup() {
+        ws.send('{"nickname":"' + nickname + '","code":"1003"}')
+    }
+</script>
+</html>
